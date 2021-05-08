@@ -4,7 +4,9 @@ import Upload from '@/views/Upload/index.vue'
 import Management from '@/views/Management/index.vue'
 import Tutorials from '@/views/Tutorials/index.vue'
 
-const titleSuffix = ' | PicX 图床神器'
+console.log('env: ', import.meta.env)
+
+const titleSuffix = ` | PicX 图床神器`
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -19,7 +21,7 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Config',
     component: Config,
     meta: {
-      title: '图床配置' + titleSuffix
+      title: `图床配置${titleSuffix}`
     }
   },
   {
@@ -27,7 +29,7 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Upload',
     component: Upload,
     meta: {
-      title: '图片上传' + titleSuffix
+      title: `图片上传${titleSuffix}`
     }
   },
   {
@@ -35,7 +37,7 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Management',
     component: Management,
     meta: {
-      title: '图床管理' + titleSuffix
+      title: `图床管理${titleSuffix}`
     }
   },
   {
@@ -43,7 +45,7 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Tutorials',
     component: Tutorials,
     meta: {
-      title: '使用教程' + titleSuffix
+      title: `使用教程${titleSuffix}`
     }
   },
   {
@@ -51,7 +53,7 @@ const routes: Array<RouteRecordRaw> = [
     name: 'About',
     component: () => import('@/views/About/index.vue'),
     meta: {
-      title: '帮助反馈' + titleSuffix
+      title: `帮助反馈${titleSuffix}`
     }
   }
 ]

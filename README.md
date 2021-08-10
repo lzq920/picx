@@ -11,9 +11,11 @@
 
 > 官方网站 https://picx.xpoet.cn/
 
-**基于 GitHub API 开发的图床神器。** 图片外链使用 jsDelivr 自动进行 CDN 加速。免下载、免安装，打开 **[PicX 官网](https://picx.xpoet.cn/)** 即可直接使用。免费、稳定、高效。
+**基于 GitHub API 开发的图床神器。** 图片外链使用 jsDelivr 自动进行 CDN 加速。不用下载、不用安装，打开 **[PicX 官网](https://picx.xpoet.cn/)** 即可使用。
 
-您只需 **选择** 或 **[创建](https://github.com/new)** 一个 GitHub 仓库来作为图床，然后进行[简单配置](https://picx.xpoet.cn/#/config) ，就能开始尽情玩转 **[PicX](https://picx.xpoet.cn/)** 。
+您只需 **选择** 或 **[创建](https://github.com/new)** 一个 GitHub 仓库作为图床，然后在 **[PicX](https://picx.xpoet.cn/)** 进行 [配置](https://picx.xpoet.cn/#/config) 就可以使用了，如此简单。
+
+亮点：:free: 完全免费、:trophy: 无比稳定、:rocket: 极速高效、:lock: 十分安全。
 
 ---
 
@@ -32,11 +34,11 @@
 - [x] 支持图片 **重命名** 和 **哈希化**（保证图片名永不重复）
 - [x] **一键复制** 图片外链（GitHub 和 CDN）
 - [x] **图床管理**（仓库图片的**增删查**）
-- [x] 支持图片 **批量上传**
+- [x] 支持图片 **批量上传** （批量选择/批量拖拽）
 - [x] 支持 **PWA**
-- [ ] 图片压缩
 - [ ] i18n
 - [ ] 自由切换 Git 厂商 （例如：Gitee / Coding）
+- [ ] ~~图片压缩~~（前端使用 Canvas 实现的图片压缩效果极差，作者已放弃；如有需要，建议使用 [TinyPNG](https://tinypng.com/) ）
 
 
 ## 如何使用 | How to use 

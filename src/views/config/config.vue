@@ -3,11 +3,21 @@
     <!-- Token -->
     <el-form label-width="70px" label-position="right" class="config-form">
       <el-form-item label="Token">
-        <el-input v-model="userConfigInfo.token" clearable :autofocus="!userConfigInfo.token"></el-input>
+        <el-input
+          v-model="userConfigInfo.token"
+          clearable
+          :autofocus="!userConfigInfo.token"
+        ></el-input>
       </el-form-item>
 
       <el-form-item class="operation">
-        <el-button plain size="small" type="primary" native-type="submit" @click="getUserInfo()">
+        <el-button
+          plain
+          size="small"
+          type="primary"
+          native-type="submit"
+          @click.prevent="getUserInfo()"
+        >
           确认 Token
         </el-button>
       </el-form-item>
@@ -56,13 +66,19 @@
       v-loading="dirLoading"
       element-loading-text="加载中..."
     >
-      <el-form-item v-if="userConfigInfo.reposList.length && userConfigInfo.selectedRepos" label="目录方式">
+      <el-form-item
+        v-if="userConfigInfo.reposList.length && userConfigInfo.selectedRepos"
+        label="目录方式"
+      >
         <el-radio-group v-model="userConfigInfo.dirMode" @change="dirModeChange">
           <el-tooltip content="手动输入一个新目录" placement="top">
             <el-radio label="newDir">新建目录</el-radio>
           </el-tooltip>
 
-          <el-tooltip :content="'图片存储在 ' + userConfigInfo.selectedBranch + ' 分支的根目录下'" placement="top">
+          <el-tooltip
+            :content="'图片存储在 ' + userConfigInfo.selectedBranch + ' 分支的根目录下'"
+            placement="top"
+          >
             <el-radio label="rootDir">根目录</el-radio>
           </el-tooltip>
 
@@ -75,7 +91,9 @@
             :content="'选择 ' + userConfigInfo.selectedRepos + ' 仓库下的一个目录'"
             placement="top"
           >
-            <el-radio label="reposDir">选择 {{ userConfigInfo.selectedRepos }} 仓库目录</el-radio>
+            <el-radio label="reposDir"
+              >选择 {{ userConfigInfo.selectedRepos }} 仓库目录</el-radio
+            >
           </el-tooltip>
         </el-radio-group>
       </el-form-item>
@@ -97,7 +115,10 @@
         ></el-input>
       </el-form-item>
 
-      <el-form-item v-if="userConfigInfo.dirList.length && userConfigInfo.dirMode === 'reposDir'" label="选择目录">
+      <el-form-item
+        v-if="userConfigInfo.dirList.length && userConfigInfo.dirMode === 'reposDir'"
+        label="选择目录"
+      >
         <el-select
           v-model="userConfigInfo.selectedDir"
           filterable
@@ -119,8 +140,15 @@
     <!-- 操作 -->
     <el-form label-width="70px">
       <el-form-item class="operation">
-        <el-button plain size="small" @click="reset()" v-if="userConfigInfo.owner"> 重置 </el-button>
-        <el-button plain size="small" type="success" @click="goUpload" v-if="userConfigInfo.selectedRepos"
+        <el-button plain size="small" @click="reset()" v-if="userConfigInfo.owner">
+          重置
+        </el-button>
+        <el-button
+          plain
+          size="small"
+          type="success"
+          @click="goUpload"
+          v-if="userConfigInfo.selectedRepos"
           >完成配置
         </el-button>
       </el-form-item>
@@ -131,12 +159,12 @@
 <script lang="ts">
 import { defineComponent, reactive, computed, toRefs, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useStore } from '@/store'
 import { ElMessage } from 'element-plus'
+import { useStore } from '@/store'
 import { DirModeEnum } from '@/common/model/dir.model'
 import { UserConfigInfoModel } from '@/common/model/userConfigInfo.model'
 import axios from '@/common/utils/axios'
-import TimeHelper from '@/common/utils/timeHelper'
+import TimeHelper from '@/common/utils/time-helper'
 
 export default defineComponent({
   name: 'config',
@@ -146,7 +174,8 @@ export default defineComponent({
     const store = useStore()
 
     const reactiveData = reactive({
-      userConfigInfo: computed((): UserConfigInfoModel => store.getters.getUserConfigInfo).value,
+      userConfigInfo: computed((): UserConfigInfoModel => store.getters.getUserConfigInfo)
+        .value,
       loggingStatus: computed(() => store.getters.getUserConfigInfo).value,
 
       loading: false,
@@ -155,21 +184,16 @@ export default defineComponent({
       getUserInfo() {
         if (this.userConfigInfo.token) {
           this.loading = true
-          axios
-            .get('/user', {
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `token ${this.userConfigInfo.token}`
-              }
-            })
-            .then((res: any) => {
-              if (res && res.status === 200) {
-                this.saveUserInfo(res)
-                this.getReposList(res.data.repos_url)
-              } else {
-                this.loading = false
-              }
-            })
+          axios.defaults.headers.Authorization = `token ${this.userConfigInfo.token}`
+          axios.get('/user').then((res: any) => {
+            console.log('[getUserInfo] ', res)
+            if (res && res.status === 200) {
+              this.saveUserInfo(res)
+              this.getReposList(res.data.repos_url)
+            } else {
+              this.loading = false
+            }
+          })
         } else {
           ElMessage.warning('Token 不能为空！')
         }
@@ -185,30 +209,23 @@ export default defineComponent({
       },
 
       getReposList(reposUrl: string) {
-        axios
-          .get(reposUrl, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `token ${this.userConfigInfo.token}`
-            }
-          })
-          .then((res: any) => {
-            if (res.status === 200 && res.data.length > 0) {
-              this.userConfigInfo.reposList = []
-              // eslint-disable-next-line no-restricted-syntax
-              for (const repos of res.data) {
-                if (!repos.fork) {
-                  this.userConfigInfo.reposList.push({
-                    value: repos.name,
-                    label: repos.name,
-                    desc: repos.description
-                  })
-                }
+        axios.get(reposUrl).then((res: any) => {
+          if (res.status === 200 && res.data.length > 0) {
+            this.userConfigInfo.reposList = []
+            // eslint-disable-next-line no-restricted-syntax
+            for (const repos of res.data) {
+              if (!repos.fork) {
+                this.userConfigInfo.reposList.push({
+                  value: repos.name,
+                  label: repos.name,
+                  desc: repos.description
+                })
               }
-              this.loading = false
-              this.persistUserConfigInfo()
             }
-          })
+            this.loading = false
+            this.persistUserConfigInfo()
+          }
+        })
       },
 
       innerSelectRepos(repos: string) {
@@ -219,12 +236,7 @@ export default defineComponent({
       getBranchList(repos: string) {
         this.dirLoading = true
         axios
-          .get(`/repos/${this.userConfigInfo.owner}/${repos}/branches`, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `token ${this.userConfigInfo.token}`
-            }
-          })
+          .get(`/repos/${this.userConfigInfo.owner}/${repos}/branches`)
           .then((res: any) => {
             if (res && res.status === 200) {
               this.dirLoading = false
@@ -251,12 +263,7 @@ export default defineComponent({
       getDirList(repos: string) {
         this.dirLoading = true
         axios
-          .get(`/repos/${this.userConfigInfo.owner}/${repos}/contents`, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `token ${this.userConfigInfo.token}`
-            }
-          })
+          .get(`/repos/${this.userConfigInfo.owner}/${repos}/contents`)
           .then((res: any) => {
             if (res && res.status === 200 && res.data.length > 0) {
               this.userConfigInfo.dirList = [{ value: '/', label: '/' }]

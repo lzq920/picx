@@ -67,7 +67,7 @@ export default defineComponent({
         .value,
 
       deleteImage(imageObj: UploadedImageModel) {
-        ElMessageBox.confirm(`此操作将会永久删除 ${imageObj.name} ？`, `删除提示`, {
+        ElMessageBox.confirm(`此操作将会永久删除图片 ${imageObj.name} ？`, `删除提示`, {
           confirmButtonText: `确定`,
           cancelButtonText: `取消`,
           iconClass: `el-icon-warning`
@@ -83,22 +83,20 @@ export default defineComponent({
       doDeleteImage(imageObj: UploadedImageModel): void {
         // eslint-disable-next-line no-param-reassign
         imageObj.deleting = true
+        const { owner, selectedRepos } = reactiveData.userConfigInfo
 
         axios
-          .delete(
-            `/repos/${this.userConfigInfo?.owner}/${this.userConfigInfo?.selectedRepos}/contents/${imageObj.path}`,
-            {
-              data: {
-                owner: this.userConfigInfo?.owner,
-                repo: this.userConfigInfo?.selectedRepos,
-                path: imageObj.path,
-                message: 'delete pictures via PicX(https://github.com/XPoet/picx)',
-                sha: imageObj.sha
-              }
+          .delete(`/repos/${owner}/${selectedRepos}/contents/${imageObj.path}`, {
+            data: {
+              owner,
+              repo: selectedRepos,
+              path: imageObj.path,
+              message: 'delete pictures via PicX(https://github.com/XPoet/picx)',
+              sha: imageObj.sha
             }
-          )
+          })
           .then((res) => {
-            console.log('delete res: ', res)
+            console.log('[deleteImage] ', res)
             if (res && res.status === 200) {
               // eslint-disable-next-line no-param-reassign
               imageObj.deleting = false
@@ -112,10 +110,15 @@ export default defineComponent({
           })
       },
 
-      imageView(imgObj: any) {
+      imageView(imgObj: UploadedImageModel) {
         store.commit('IMAGE_VIEWER', {
           isShow: true,
-          url: imgObj.cdn_url
+          imgInfo: {
+            name: imgObj.name,
+            size: imgObj.size,
+            lastModified: imgObj.lastModified,
+            url: imgObj.cdn_url
+          }
         })
       }
     })

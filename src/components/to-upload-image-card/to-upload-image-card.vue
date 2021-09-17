@@ -135,7 +135,7 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, reactive, toRefs } from 'vue'
+import { computed, defineComponent, reactive, toRefs, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useStore } from '@/store'
 import { getFileSize } from '@/common/utils/file-handle-helper'
@@ -148,7 +148,7 @@ import {
 import { ExternalLinkType } from '@/common/model/externalLink.model'
 import TimeHelper from '@/common/utils/time-helper'
 import axios from '@/common/utils/axios'
-import uploadUrlHandle from '@/common/utils/uploadUrlHandle'
+import uploadUrlHandle from '@/common/utils/upload-url-handle'
 import generateExternalLink from '@/common/utils/generate-external-link'
 import copyExternalLink from '@/components/copy-external-link/copy-external-link.vue'
 import selectedInfoBar from '@/components/selected-info-bar/selected-info-bar.vue'
@@ -194,7 +194,7 @@ export default defineComponent({
       rename(e: boolean, img: any) {
         if (e) {
           // eslint-disable-next-line no-param-reassign
-          img.filename.name = img.filename.newName
+          img.filename.name = img.filename.newName.trim().replace(/\s+/g, '-')
         } else {
           // eslint-disable-next-line no-param-reassign
           img.filename.name = img.filename.initName
@@ -330,7 +330,7 @@ export default defineComponent({
           cdn_url: img.externalLink.cdn,
           md_gh_url: img.externalLink.markdown_gh,
           md_cdn_url: img.externalLink.markdown_cdn,
-          is_transform_md: false,
+          is_transform_md: userConfigInfo.personalSetting.defaultMarkdown,
           deleting: false,
           size: img.fileInfo.size,
           lastModified: img.fileInfo.lastModified
@@ -371,6 +371,15 @@ export default defineComponent({
     const removeToUploadImage = (imgItem: ToUploadImageModel) => {
       store.dispatch('TO_UPLOAD_IMAGE_LIST_REMOVE', imgItem.uuid)
     }
+
+    onMounted(() => {
+      const isHash = reactiveData.userConfigInfo.personalSetting.defaultHash
+      reactiveData.toUploadImage.list.forEach((v: ToUploadImageModel) => {
+        // eslint-disable-next-line no-param-reassign
+        v.filename.isHashRename = isHash
+        reactiveData.hashRename(isHash, v)
+      })
+    })
 
     return {
       ...toRefs(reactiveData),

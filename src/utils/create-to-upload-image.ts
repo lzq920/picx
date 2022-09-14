@@ -1,4 +1,4 @@
-import { ToUploadImageModel } from '../model/upload.model'
+import { ToUploadImageModel } from '../common/model/upload.model'
 
 export default (): ToUploadImageModel => {
   return {
@@ -34,9 +34,9 @@ export default (): ToUploadImageModel => {
 
     externalLink: {
       github: '',
-      cdn: '',
-      markdown_gh: '',
-      markdown_cdn: ''
+      jsdelivr: '',
+      staticaly: '',
+      cloudflare: ''
     }
   }
 }

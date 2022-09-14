@@ -1,11 +1,11 @@
 <template>
   <main class="main-container" @click="changeUploadAreaActive">
-    <div class="top">
+    <div class="top-container">
       <header-content />
     </div>
 
-    <div class="bottom">
-      <div class="container">
+    <div class="bottom-container">
+      <div class="bottom-content">
         <div class="left">
           <nav-content />
         </div>
@@ -18,24 +18,21 @@
       </div>
     </div>
   </main>
-  <image-viewer></image-viewer>
 </template>
 
 <script lang="ts">
 import { defineComponent, onMounted } from 'vue'
 import headerContent from '@/components/header-content/header-content.vue'
 import navContent from '@/components/nav-content/nav-content.vue'
-import imageViewer from '@/components/image-viewer/image-viewer.vue'
 import { useStore } from '@/store'
-import userConfigInfoModel from '@/common/utils/set-theme-mode'
+import userConfigInfoModel from '@/utils/set-theme-mode'
 
 export default defineComponent({
   name: 'main-container',
 
   components: {
     headerContent,
-    navContent,
-    imageViewer
+    navContent
   },
 
   setup() {

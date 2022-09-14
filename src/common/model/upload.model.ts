@@ -1,4 +1,3 @@
-// eslint-disable-next-line no-shadow
 export enum UploadStatusEnum {
   // eslint-disable-next-line no-unused-vars
   uploaded = 'uploaded',
@@ -16,14 +15,13 @@ export interface UploadedImageModel {
   path: string
   name: string
   size: any
-  lastModified?: number
-  github_url: string
-  cdn_url: string
-  md_gh_url: string
-  md_cdn_url: string
   deleting: boolean
   is_transform_md: boolean
   checked: boolean
+  github_url: string
+  jsdelivr_cdn_url: string
+  staticaly_cdn_url: string
+  cloudflare_cdn_url: string
 }
 
 export interface ToUploadImageModel {
@@ -61,11 +59,9 @@ export interface ToUploadImageModel {
 
   externalLink: {
     github: string
-    cdn: string
-    // eslint-disable-next-line camelcase
-    markdown_gh: string
-    // eslint-disable-next-line camelcase
-    markdown_cdn: string
+    jsdelivr: string
+    staticaly: string
+    cloudflare: string
   }
 
   uploadedImg?: UploadedImageModel

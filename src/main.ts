@@ -1,21 +1,14 @@
 import { createApp } from 'vue'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import router from '@/router/index'
-import { key, store } from '@/store'
+import { key, store } from '@/stores'
 import App from './App.vue'
+import i18n from '@/plugins/vue/i18n'
 import 'element-plus/theme-chalk/dark/css-vars.css'
-
-if (import.meta.env.MODE === 'production') {
-  // @ts-ignore
-  import('@/utils/register-sw.ts')
-}
+import '@/styles/base.styl'
+import useDirective from '@/common/directive'
 
 const app = createApp(App)
 
-// import element-plus icons
-// eslint-disable-next-line no-restricted-syntax
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component)
-}
-// @ts-ignore
-app.use(router).use(store, key).mount('#app')
+useDirective(app)
+
+app.use(router).use(store, key).use(i18n).mount('#app')

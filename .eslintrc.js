@@ -7,12 +7,11 @@ function parseAutoImportsDts(contents) {
 }
 
 function dts2Globals() {
-  const SRC = path.resolve(__dirname, './auto-imports.d.ts')
+  const SRC = path.resolve(__dirname, './src/auto-imports.d.ts')
   const contents = fs.readFileSync(SRC, { encoding: 'utf-8' })
   const parsed = parseAutoImportsDts(contents)
 
   return parsed.reduce((acc, word) => {
-    // eslint-disable-next-line no-param-reassign
     acc[word] = 'readonly'
     return acc
   }, {})
@@ -38,16 +37,11 @@ module.exports = {
     'import/no-extraneous-dependencies': 'off',
     'vue/no-multiple-template-root': 'off',
     'no-console': 'off',
-    'no-unused-vars': 'off',
     'no-shadow': 'off',
+    'import/prefer-default-export': 'off',
     camelcase: 'off',
-    'no-param-reassign': [
-      'error',
-      {
-        props: true,
-        ignorePropertyModificationsFor: ['store', 'state', 'config']
-      }
-    ]
+    'no-param-reassign': 'off',
+    'no-await-in-loop': 'off'
   },
   globals: {
     ...dts2Globals()

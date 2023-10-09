@@ -1,61 +1,75 @@
 <template>
   <div
     class="image-card"
-    :class="{ listing: listing, checked: imageObj.checked }"
+    :class="{ checked: imageObj.checked }"
     v-loading="imageObj.deleting"
-    element-loading-text="删除中..."
-    @mouseenter="isShowDelBtn = true"
-    @mouseleave="isShowDelBtn = false"
+    :element-loading-text="$t('management.loadingTxt3')"
+    @mouseenter="isShowOperateBtn = true"
+    @mouseleave="isShowOperateBtn = false"
   >
     <div class="image-box">
-      <img data-fancybox="gallery" :src="imgUrl" />
+      <el-image
+        :src="imgUrl"
+        fit="cover"
+        loading="lazy"
+        lazy
+        :hide-on-click-modal="true"
+        :preview-src-list="[imgUrl]"
+      />
     </div>
+
     <div class="info-box">
       <div class="image-info">
-        <el-input
-          size="small"
-          v-if="renameValue && props.modelValue === props.index"
-          class="rename-input"
-          v-model="renameValue"
-          @blur="renameInputBlur"
-          @keydown.enter.prevent="updateRename"
-          ref="renameInputRef"
-        ></el-input>
-        <div class="filename" v-else>{{ imageObj.name }}</div>
-        <div class="image-operation">
-          <copy-external-link :img-obj="imageObj" />
+        <!-- 重命名操作 -->
+        <div class="rename-operate" v-if="isRenameImg">
+          <el-input
+            size="small"
+            class="rename-input"
+            v-model="renameInputValue"
+            clearable
+            ref="renameInputRef"
+            :maxlength="RENAME_MAX_LENGTH"
+          ></el-input>
+          <el-button-group size="small">
+            <el-button @click="isRenameImg = false"><IEpClose /></el-button>
+            <el-button @click.prevent="updateRename"><IEpCheck /></el-button>
+          </el-button-group>
         </div>
+        <!-- 文件名 -->
+        <div class="filename" v-else>{{ imageObj.name }}</div>
       </div>
     </div>
 
-    <div
-      class="operation-box"
-      v-show="isShowDelBtn || dropdownVisible || imageObj.checked"
-    >
+    <!-- 图片链接操作 -->
+    <div class="copy-link-box">
+      <copy-image-link :img-obj="imageObj" />
+    </div>
+
+    <div class="operation-box" v-show="isShowOperateBtn || dropdownVisible || imageObj.checked">
       <div class="operation-left">
         <div
           v-if="isManagementPage"
           :class="[imageObj.checked ? 'picked-btn' : 'pick-btn', 'operation-btn']"
           @click="togglePick(imageObj)"
         >
-          <el-icon v-if="imageObj.checked"><Check /></el-icon>
+          <el-icon v-if="imageObj.checked"><IEpCheck /></el-icon>
         </div>
       </div>
       <div class="operation-right">
         <el-dropdown size="default" trigger="click" @visible-change="visibleChange">
           <div class="operation-btn">
-            <el-icon><MoreFilled /></el-icon>
+            <el-icon><IEpMoreFilled /></el-icon>
           </div>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="deleteImageTips(imageObj)">
-                删除
+                {{ $t('upload.delete') }}
               </el-dropdown-item>
-              <el-dropdown-item @click.self="renameImage(imageObj)">
-                重命名
+              <el-dropdown-item @click.self="showRenameInput(imageObj)">
+                {{ $t('upload.rename') }}
               </el-dropdown-item>
               <el-dropdown-item @click="viewImageProperties(imageObj)">
-                属性
+                {{ $t('management.property') }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -66,39 +80,37 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, getCurrentInstance, ref } from 'vue'
 import type { ElInput } from 'element-plus'
 import { useRoute } from 'vue-router'
-import { useStore } from '@/store'
-import axios from '@/utils/axios'
-import { UploadedImageModel } from '@/common/model/upload.model'
-import { getBase64ByImageUrl, getImage } from '@/utils/rename-image'
-import { uploadImage_single } from '@/utils/upload-helper'
-import { getFilename, getFileSize, getFileSuffix } from '@/utils/file-handle-helper'
-import ExternalLinkType from '@/common/model/external-link.model'
+import { useStore } from '@/stores'
+import { UploadedImageModel, UploadImageModel } from '@/common/model'
+import {
+  getBase64ByImageUrl,
+  getFilename,
+  getFileSize,
+  generateImageLinks,
+  getUuid,
+  createUploadImageObject,
+  getFileSuffix,
+  blobToBase64ByImageUrl
+} from '@/utils'
+import { uploadImageToGitHub } from '@/utils/upload-utils'
+import { deleteSingleImage } from '@/common/api'
+import { RENAME_MAX_LENGTH } from '@/common/constant'
 
 const props = defineProps({
-  listing: {
-    type: Boolean,
-    default: false
-  },
   imageObj: {
-    type: Object,
-    default: () => {}
+    type: Object as () => UploadedImageModel,
+    default: () => ({})
   },
   isUploaded: {
     type: Boolean,
     default: false
-  },
-  index: {
-    type: Number
-  },
-  modelValue: {
-    type: Number
   }
 })
 
-const emits = defineEmits(['update:modelValue'])
+const instance = getCurrentInstance()
 
 const store = useStore()
 const router = useRoute()
@@ -108,156 +120,161 @@ const isManagementPage = computed(() => {
   return router.path === '/management'
 })
 
-const imgUrl = computed(() => {
-  switch (userSettings.externalLinkType) {
-    case ExternalLinkType.jsdelivr:
-      return props.imageObj.jsdelivr_cdn_url
-    case ExternalLinkType.staticaly:
-      return props.imageObj.staticaly_cdn_url
-    case ExternalLinkType.cloudflare:
-      return props.imageObj.cloudflare_cdn_url
-    default:
-      return props.imageObj.github_url
-  }
-})
+const imgUrl = computed(() => generateImageLinks(props.imageObj, userConfigInfo, userSettings))
 
 const renameInputRef = ref<InstanceType<typeof ElInput>>()
+const renameInputValue = ref<string>('')
+const isRenameImg = ref<boolean>(false)
 
-const isShowDelBtn = ref(false)
+const isShowOperateBtn = ref<boolean>(false)
+const dropdownVisible = ref<boolean>(false)
 
-const renameValue = ref('')
-
-const dropdownVisible = ref<Boolean>(false)
-
-const doDeleteImage = (
+const deleteOriginImage = (
   imageObj: UploadedImageModel,
   isRename: boolean = false
-): Promise<Boolean> => {
+): Promise<boolean> => {
   if (!isRename) {
-    // eslint-disable-next-line no-param-reassign
     imageObj.deleting = true
   }
-  const { owner, selectedRepos } = userConfigInfo
+  const { owner, selectedRepo: repo } = userConfigInfo
+  const { path, sha } = imageObj
 
-  return new Promise((resolve) => {
-    axios
-      .delete(`/repos/${owner}/${selectedRepos}/contents/${imageObj.path}`, {
-        data: {
-          owner,
-          repo: selectedRepos,
-          path: imageObj.path,
-          message: 'Delete picture via PicX(https://github.com/XPoet/picx)',
-          sha: imageObj.sha
-        }
-      })
-      .then((res) => {
-        console.log('[deleteImage] ', res)
-        if (res && res.status === 200) {
-          // eslint-disable-next-line no-param-reassign
-          imageObj.deleting = false
-          // eslint-disable-next-line no-unused-expressions
-          ElMessage.success(`${isRename ? '更新' : '删除'}成功！`)
-          store.dispatch('UPLOADED_LIST_REMOVE', imageObj.uuid)
-          store.dispatch('DIR_IMAGE_LIST_REMOVE', imageObj)
-          resolve(true)
-        } else {
-          // eslint-disable-next-line no-param-reassign
-          imageObj.deleting = false
-        }
-      })
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise(async (resolve) => {
+    const res = await deleteSingleImage(owner, repo, path, sha)
+    if (res) {
+      if (isRename) {
+        isRenameImg.value = false
+        ElMessage.success({ message: instance?.proxy?.$t('management.message4') })
+      } else {
+        ElMessage.success({ message: instance?.proxy?.$t('management.message5') })
+      }
+      await store.dispatch('DIR_IMAGE_LIST_REMOVE', imageObj)
+      await store.dispatch('UPLOAD_IMG_LIST_REMOVE', imageObj.uuid)
+      resolve(true)
+    } else {
+      resolve(false)
+    }
   })
 }
 
 const deleteImageTips = (imageObj: UploadedImageModel) => {
   ElMessageBox.confirm(
     `
-    <div>此操作将会永久删除图片：</div>
+    <div>${instance?.proxy?.$t('management.delTips')}：</div>
     <strong>${imageObj.name}</strong>
     `,
-    `删除提示`,
+    instance?.proxy?.$t('tips'),
     {
       dangerouslyUseHTMLString: true,
       type: 'warning'
     }
   )
     .then(() => {
-      doDeleteImage(imageObj)
+      deleteOriginImage(imageObj)
     })
     .catch(() => {
-      console.log('取消删除')
+      console.log('Cancel')
     })
 }
 
 const togglePick = (imageObj: UploadedImageModel) => {
-  // eslint-disable-next-line no-param-reassign
   imageObj.checked = !imageObj.checked
   store.commit('IMAGE_CARD', { imageObj })
 }
 
-const renameImage = async (imgObj: UploadedImageModel) => {
-  emits('update:modelValue', props.index)
-  renameValue.value = getFilename(imgObj.name)
-  await nextTick(() => {
-    const temp = setTimeout(() => {
-      renameInputRef.value?.focus()
-      clearTimeout(temp)
-    }, 150)
-  })
-}
-
-const renameInputBlur = () => {
-  emits('update:modelValue', undefined)
+/**
+ * 显示重命名输入框和确定按钮
+ * @param imgObj
+ */
+const showRenameInput = async (imgObj: UploadedImageModel) => {
+  isRenameImg.value = true
+  renameInputValue.value = getFilename(imgObj.name)
+  setTimeout(() => {
+    renameInputRef.value?.focus()
+  }, 100)
 }
 
 const updateRename = async () => {
-  renameInputBlur()
+  const { imageObj } = props
 
-  const { imageObj }: any = props
-
-  if (renameValue.value === getFilename(imageObj.name) || !renameValue.value) {
+  if (!renameInputValue.value) {
+    ElMessage.error({ message: instance?.proxy?.$t('management.message1') })
+    renameInputRef.value?.focus()
     return
   }
 
-  const renameFn = async () => {
-    const loading = ElLoading.service({
-      lock: true,
-      text: '正在重命名...'
-    })
-
-    const suffix = getFileSuffix(imageObj.name)
-
-    const imgInfo = {
-      name: renameValue.value + imageObj.name.substring(imageObj.name.indexOf('.')),
-      size: imageObj.size,
-      lastModified: Date.now(),
-      type: `image/${suffix}`
-    }
-
-    const base64 = await getBase64ByImageUrl(imgUrl.value, suffix)
-
-    if (base64) {
-      const newImgObj = getImage(base64, imgInfo)
-      if (newImgObj) {
-        const isUploadSuccess = await uploadImage_single(userConfigInfo, newImgObj)
-
-        if (isUploadSuccess) {
-          renameValue.value = ''
-          await doDeleteImage(imageObj, true)
-          await store.dispatch('UPLOADED_LIST_REMOVE', newImgObj.uuid)
-        }
-      }
-    }
-    loading.close()
+  if (renameInputValue.value === getFilename(imageObj.name)) {
+    ElMessage.error({ message: instance?.proxy?.$t('management.message2') })
+    isRenameImg.value = false
+    return
   }
 
-  ElMessageBox.confirm(`该图片重命名为 ${renameValue.value} ？`, `提示`, {
-    type: 'warning'
-  })
-    .then(async () => {
-      await renameFn()
+  const renameImg = async () => {
+    const loading = ElLoading.service({
+      lock: true,
+      text: instance?.proxy?.$t('management.loadingTxt2')
+    })
+
+    // 重命名的逻辑是先上传一张新名称的图片，再删除旧图片
+
+    const suffix = getFileSuffix(imageObj.name)
+    const newUuid = getUuid()
+    const newFilename = `${renameInputValue.value}${
+      userSettings.imageName.autoAddHash ? `.${newUuid}` : ''
+    }.${suffix}`
+
+    let base64
+
+    if (!suffix.includes('svg')) {
+      base64 = await getBase64ByImageUrl(imgUrl.value || '', suffix)
+    } else {
+      base64 = await blobToBase64ByImageUrl(imgUrl.value || '')
+    }
+
+    if (base64) {
+      const tmpImgObj: UploadImageModel = createUploadImageObject()
+      tmpImgObj.uuid = newUuid
+      tmpImgObj.base64.originalBase64 = base64
+      tmpImgObj.filename.final = newFilename
+      tmpImgObj.reUploadInfo!.isReUpload = true
+      tmpImgObj.reUploadInfo!.dir = imageObj.dir
+      let path = newFilename
+      if (imageObj.dir !== '/') {
+        path = `${imageObj.dir}/${newFilename}`
+      }
+      tmpImgObj.reUploadInfo!.path = path
+
+      // 重新上传重命名后的图片
+      const isUploadSuccess = await uploadImageToGitHub(userConfigInfo, tmpImgObj)
+
+      if (isUploadSuccess) {
+        renameInputValue.value = ''
+        await deleteOriginImage(imageObj, true)
+        await store.dispatch('UPLOAD_IMG_LIST_REMOVE', imageObj.uuid)
+      } else {
+        ElMessage.error({ message: instance?.proxy?.$t('management.message3') })
+      }
+    } else {
+      ElMessage.error({ message: instance?.proxy?.$t('management.message3') })
+    }
+    loading.close()
+    isRenameImg.value = false
+  }
+
+  ElMessageBox.confirm(
+    instance?.proxy?.$t('management.renameTips', { name: renameInputValue.value }),
+    instance?.proxy?.$t('tips'),
+    {
+      type: 'info'
+    }
+  )
+    .then(() => {
+      renameImg()
     })
     .catch(() => {
-      console.log('取消图片重命名')
+      console.log('Cancel')
+      isRenameImg.value = false
     })
 }
 
@@ -265,13 +282,19 @@ const visibleChange = (e: boolean) => {
   dropdownVisible.value = e
 }
 
+/**
+ * 查看图片属性
+ * @param imgObj
+ */
 const viewImageProperties = (imgObj: UploadedImageModel) => {
   ElMessageBox.confirm(
     `
-    <div>图片名称：<strong>${imgObj.name}</strong></div>
-    <div>图片大小：<strong>${getFileSize(imgObj.size)} KB</strong></div>
+    <div>${instance?.proxy?.$t('management.imageName')}：<strong>${imgObj.name}</strong></div>
+    <div>${instance?.proxy?.$t('management.imageSize')}：<strong>${getFileSize(
+      imgObj.size
+    )} KB</strong></div>
     `,
-    `属性`,
+    instance?.proxy?.$t('management.property'),
     {
       showCancelButton: false,
       showConfirmButton: false,
@@ -283,5 +306,5 @@ const viewImageProperties = (imgObj: UploadedImageModel) => {
 </script>
 
 <style scoped lang="stylus">
-@import 'image-card.styl';
+@import 'image-card.styl'
 </style>

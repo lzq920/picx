@@ -1,111 +1,78 @@
-@import "../../style/base.styl"
-
-$infoBoxHeight = 56rem
-
 .image-card {
   position relative
-  width 100%
-  height 100%
-  box-shadow 1rem 2rem 3rem var(--shadow-color)
   box-sizing border-box
-  padding-bottom $infoBoxHeight
+  width 100%
+  box-shadow 1rem 2rem 3rem var(--shadow-color)
   user-select none
 
-  &.checked, &:hover {
-    box-shadow 0 0 10rem #666
+  &.checked
+  &:hover {
+    box-shadow 0 0 10rem var(--shadow-hover-color)
   }
-
-  &.listing {
-    display flex
-    justify-content flex-start
-    align-items center
-    padding 5rem
-    border-radius $box-border-radius
-
-    .image-box {
-      height 45rem
-      width 45rem
-    }
-
-    .info-box {
-      position relative
-      width 80%
-    }
-
-    :deep(.el-loading-mask) {
-      .el-loading-spinner {
-        margin-top -25rem
-
-        .circular {
-          height 24rem
-          width 24rem
-        }
-
-        .el-loading-text {
-          margin 0
-        }
-      }
-
-    }
-  }
-
 
   .image-box {
     position relative
     width 100%
-    height 100%
+    height 150rem
 
-    img {
+    .el-image {
       width 100%
       height 100%
-      object-fit cover
-      cursor pointer
     }
   }
 
 
   .info-box {
+    position relative
+    box-sizing border-box
     width 100%
-    height $infoBoxHeight
-    position absolute
-    bottom 0
-    left 0
+    margin-top 5rem
+    padding 5rem
 
     .image-info {
-      width 100%
-      height 100%
-      padding 5rem
-      color var(--default-text-color)
-      box-sizing border-box
       display flex
       flex-direction column
       justify-content space-between
+      box-sizing border-box
+      width 100%
+      height 100%
+      color var(--text-color)
 
-      .rename-input {
-        height 20rem
+      .rename-operate {
         display flex
-        margin-bottom 4rem
+        align-items center
+        justify-content space-between
+        height 22rem
+
+        .rename-input {
+          width 122rem
+        }
       }
 
+
       .filename {
-        height 16rem
-        overflow hidden
-        text-overflow ellipsis
-        white-space nowrap
-        font-size 14rem
+        height 18rem
         margin-bottom 6rem
+        overflow hidden
+        font-size 14rem
+        white-space nowrap
+        text-overflow ellipsis
       }
     }
   }
 
 
+  .copy-link-box {
+    padding 5rem
+  }
+
   .operation-box {
     position absolute
     top 10rem
     right 8rem
-    width calc(100% - 16rem)
     display flex
     justify-content space-between
+    width calc(100% - 16rem)
 
     .operation-left {
       .picked-btn {
@@ -120,23 +87,21 @@ $infoBoxHeight = 56rem
     }
 
     .operation-btn {
+      display flex
+      align-items center
+      justify-content center
       width 32rem
       height 32rem
-      border-radius 50%
-      box-shadow 0 0 6rem #555
-      cursor pointer
-      background var(--background-color)
-      display flex
-      justify-content center
-      align-items center
       margin-right 8rem
       font-size 18rem
+      background var(--background-color)
+      border-radius 50%
+      box-shadow 0 0 6rem var(--shadow-color)
+      cursor pointer
 
       &:last-child {
         margin-right 0
       }
     }
   }
-
-
 }
